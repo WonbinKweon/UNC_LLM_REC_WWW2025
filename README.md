@@ -1,2 +1,2 @@
-# LLMUNCREC_KDD
+# UNCLLMREC_KDD
 for anonymous submission
