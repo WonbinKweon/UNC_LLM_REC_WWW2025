@@ -8,7 +8,7 @@ for anonymous submission of KDD 2025 August.
 for candidate generators
 - models.py
 - train.py
-- we provide BPR for ml-1m dataset
+- we provide pre-trained BPR for ml-1m dataset
 
 for fine-tuning LLMs
 - finetune_hug.py
