@@ -1,6 +1,5 @@
-# UNCLLMREC_KDD
-for anonymous submission of KDD 2025 August.
-
+# Uncertainty Quantification and Decomposition for LLMs-based Recommendation
+for anonymous submission of WWW 2025.
 
 
 
