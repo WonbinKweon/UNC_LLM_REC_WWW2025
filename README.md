@@ -11,7 +11,7 @@ for candidate generators
 
 for fine-tuning LLMs
 - finetune_hug.py
-- we provide fine-truned LoRA weights for ml-1m dataset
+- we provide fine-tuned LoRA weights for ml-1m dataset
 
 for generating recommendations with LLMs
 - utils.py
