@@ -123,10 +123,13 @@ def train(args):
 
             if model_name == "meta-llama/Llama-2-7b-chat-hf" or model_name == "meta-llama/Llama-2-13b-chat-hf" or model_name == "meta-llama/Llama-2-70b-chat-hf":
                 prompt = f"{B_INST} {B_SYS}{system_prompt.strip()}{E_SYS}{user_prompt.strip()} {E_INST}\n\n{indicator} {indicator_env[0]}"
+            elif model_name == "meta-llama/Meta-Llama-3.1-8B-Instruct":
+                prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{system_prompt.strip()}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{user_prompt.strip()}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n{indicator} {indicator_env[0]}"
             elif model_name == "mistralai/Mistral-7B-Instruct-v0.2" or model_name == "mistralai/Mixtral-8x7B-Instruct-v0.1":
                 prompt = f"{B_INST} {system_prompt.strip()}\n{user_prompt.strip()} {E_INST} {indicator} {indicator_env[0]}"
-            elif model_name == "google/gemma-7b-it" or model_name == "google/gemma-2b-it":
+            elif model_name == "google/gemma-7b-it" or model_name == "google/gemma-2b-it" or model_name == "google/gemma-2-9b-it":
                 prompt = f"<bos><start_of_turn>user\n{system_prompt.strip()}\n{user_prompt.strip()}<end_of_turn>\n<start_of_turn>model\n{indicator} {indicator_env[0]}"
+                
             prompts.append(prompt)
 
     ## Generate #################################################
@@ -172,13 +175,26 @@ def train(args):
     print("ndcg:", ndcg10.mean(), ndcg.mean())
 
     print("avg total uncertainty: ", np.mean(total_unc)) # Total uncertainty (#users, )
+    print("avg model uncertainty: ", np.mean(model_unc)) # Model uncertainty (#users, )
+    print("avg data uncertainty: ", np.mean(total_unc) - np.mean(model_unc)) # Model uncertainty (#users, )
 
     import lifelines
     print("total C-index: ", lifelines.utils.concordance_index(ndcg, -total_unc, event_observed=None))
+    print("model C-index: ", lifelines.utils.concordance_index(ndcg, -model_unc, event_observed=None))
 
     import scipy.stats as stats
     print("total tau: ", stats.kendalltau(ndcg, -total_unc)[0])
+    print("model tau: ", stats.kendalltau(ndcg, -model_unc)[0])
 
+    import scipy.stats as stats
+    print("total r: ", stats.pearsonr(ndcg, -total_unc)[0])
+    print("model r: ", stats.pearsonr(ndcg, -model_unc)[0])
+
+    ## Save #################################################
+    if args.model_ft != None:
+        np.save('result/'+dataset+'_'+args.model_ft.split("/")[-1]+args.save, y_prob_matrix_per_re)
+    else:
+        np.save('result/'+dataset+'_'+model_name.split("/")[-1]+args.save, y_prob_matrix_per_re)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -193,6 +209,7 @@ if __name__ == '__main__':
     parser.add_argument('-ind_env', '--ind_env', nargs='+', default=["[", "]"])
     parser.add_argument('--ind_sym', default="A", type=str)
     parser.add_argument('-title_env', '--title_env', nargs='+', default=["'", "'"])
+    parser.add_argument('--save', default="", type=str)
     
     args = parser.parse_args()
     result = train(args)
