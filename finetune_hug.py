@@ -39,7 +39,9 @@ def train(args):
     num_item = len(item_list)
     
     ## Base Model #################################################
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
+    
     base_model = torch.load('model/BPR_'+dataset, map_location = device)
     base_model.eval()
 
@@ -107,12 +109,15 @@ def train(args):
                 "Only respond the identifier of the recommended product without any word or explain.\n"\
                 "Which product would I like to purchase next most?"
             system_prompt = "You are a product recommender system.\nGiven user's purchase history, you output the identifier of the recommended product."
-
+            
+        #prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_special_tokens=False) #.to(device) ## 이렇게하면 BOS/EOS 붙어서나옴
         if model_name == "meta-llama/Llama-2-7b-chat-hf" or model_name == "meta-llama/Llama-2-13b-chat-hf" or model_name == "meta-llama/Llama-2-70b-chat-hf":
             prompt = f"{B_INST} {B_SYS}{system_prompt.strip()}{E_SYS}{user_prompt.strip()} {E_INST}\n\n{indicator} {indicator_env[0]}{indicator_sym[test_idx]}"
+        elif model_name == "meta-llama/Meta-Llama-3.1-8B-Instruct":
+            prompt = f"<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{system_prompt.strip()}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{user_prompt.strip()}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n{indicator} {indicator_env[0]}{indicator_sym[test_idx]}"
         elif model_name == "mistralai/Mistral-7B-Instruct-v0.2" or model_name == "mistralai/Mixtral-8x7B-Instruct-v0.1":
             prompt = f"{B_INST} {system_prompt.strip()}\n{user_prompt.strip()} {E_INST} {indicator} {indicator_env[0]}{indicator_sym[test_idx]}"
-        elif model_name == "google/gemma-7b-it" or model_name == "google/gemma-2b-it":
+        elif model_name == "google/gemma-7b-it" or model_name == "google/gemma-2b-it" or model_name == "google/gemma-2-9b-it":
             prompt = f"<bos><start_of_turn>user\n{system_prompt.strip()}\n{user_prompt.strip()}<end_of_turn>\n<start_of_turn>model\n{indicator} {indicator_env[0]}{indicator_sym[test_idx]}"
         
         prompts.append(prompt)
@@ -137,11 +142,16 @@ def train(args):
             print(f"Model loaded on {device}")
         else:
             model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
-        lora_config = LoraConfig(task_type='CAUSAL_LM', r=16, lora_alpha=16, lora_dropout=0.05)
+        
+        if model_name == "google/gemma2-8b-it":
+            lora_config = LoraConfig(task_type='CAUSAL_LM', r=16, lora_alpha=16, lora_dropout=0.05, bias="none", target_modules=['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj', 'lm_head'])
+        else:
+            lora_config = LoraConfig(task_type='CAUSAL_LM', r=16, lora_alpha=16, lora_dropout=0.05)
+        
         model = get_peft_model(model, lora_config)
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side='left', truncation_side='left')
-    tokenizer.pad_token = tokenizer.eos_token  
+    tokenizer.pad_token = tokenizer.eos_token
     
     model.train()
     optimizer = AdamW(model.parameters(), lr=2e-5, weight_decay=0.01)
@@ -149,7 +159,7 @@ def train(args):
         train_loss = 0
         
         for batch in data_loader:
-            if model_name == "google/gemma-7b-it":
+            if model_name == "google/gemma-7b-it" or model_name == "google/gemma2-9b-it":
                 inputs = tokenizer(batch, return_tensors="pt", padding=True, truncation=True, max_length=500).to(device)
             else:
                 inputs = tokenizer(batch, return_tensors="pt", padding=True, truncation=True, max_length=600).to(device)
