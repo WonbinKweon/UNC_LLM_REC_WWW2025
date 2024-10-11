@@ -21,7 +21,7 @@ for generating recommendations with LLMs
 
 ### How to run
 for zero-shot ranking
-- python uncertainty_hug.py --nper 5 --nhist 20 --ncan 20 --bs 5 --ind Candidate --ind_env [ ] --ind_sym A --title_env "'" "'" --dataset ml-1m --model meta-llama/Meta-Llama-3.1-8B-Instruct
+- python uncertainty_hug_zs.py --nper 5 --nhist 20 --ncan 20 --bs 5 --ind Candidate --ind_env [ ] --ind_sym A --title_env "'" "'" --dataset ml-1m --model meta-llama/Meta-Llama-3.1-8B-Instruct
 
 for fine-tuned ranking
 - python uncertainty_hug.py --nper 5 --nhist 20 --ncan 20 --bs 5 --ind Candidate --ind_env [ ] --ind_sym A --title_env "'" "'" --dataset ml-1m --model meta-llama/Meta-Llama-3.1-8B-Instruct --model_ft model/ml-1m/Meta-Llama-3.1-8B-Instruct_3
