@@ -1,7 +1,4 @@
-# Uncertainty Quantification and Decomposition for LLMs-based Recommendation
-for anonymous submission of WWW 2025.
-
-
+# Uncertainty Quantification and Decomposition for LLMs-based Recommendation, WWW 2025
 
 ### Source codes
 for candidate generators
